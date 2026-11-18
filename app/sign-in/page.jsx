@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Lock, Mail, Wrench } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Lock, Mail, Wrench } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 const SignInPage = () => {
+  const [showPassword, setShowPassword] = useState(false);
+
   const handleSubmit = (event) => {
     event.preventDefault();
     // TODO: implement sign in here
@@ -74,11 +77,24 @@ const SignInPage = () => {
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   placeholder="••••••••"
-                  className="h-11 w-full rounded-xl border border-orange-200 bg-white pl-10 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:ring-3 focus:ring-orange-100"
+                  className="h-11 w-full rounded-xl border border-orange-200 bg-white pl-10 pr-11 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:ring-3 focus:ring-orange-100"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-gray-400 transition-colors hover:text-orange-500"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </div>
 

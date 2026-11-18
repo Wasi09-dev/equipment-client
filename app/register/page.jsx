@@ -1,16 +1,59 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Image, Lock, Mail, User, Wrench } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Image, Lock, Mail, User, Wrench } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "@/components/ui/toast";
 const RegisterForm = () => {
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    // TODO: implement register here
-    // const formData = new FormData(event.currentTarget);
-  };
+  const router = useRouter();
+const [loading, setLoading] = useState(false);
+const [error, setError] = useState("");
+const [showPassword, setShowPassword] = useState(false);
+const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+const handleSubmit = async (event) => {
+  event.preventDefault();
+  setError("");
+
+  const formData = new FormData(event.currentTarget);
+  const name = formData.get("name");
+  const image = formData.get("imageUrl");
+  const email = formData.get("email");
+  const password = formData.get("password");
+  const confirmPassword = formData.get("confirmPassword");
+
+  if (password !== confirmPassword) {
+    setError("Passwords do not match");
+    return;
+  }
+
+  setLoading(true);
+  const { error } = await authClient.signUp.email({
+    name,
+    email,
+    password,
+    image: image || undefined,
+    callbackURL: "/",
+  });
+  setLoading(false);
+
+  if (error) {
+    setError(error.message || "Something went wrong");
+    return
+  }
+toast.add({
+  title: "Account created",
+  description: "Your account has been created successfully. Please check your email to verify your account.",
+  variant: "success",
+
+});
+  router.push("/");
+  router.refresh();
+};
 
   return (
     <section className="flex flex-1 items-center justify-center bg-gradient-to-br from-orange-50 via-white to-orange-100 px-4 py-16">
@@ -38,7 +81,7 @@ const RegisterForm = () => {
           {/* Form */}
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             <div>
-              <label
+              <label 
                 htmlFor="name"
                 className="mb-1.5 block text-sm font-medium text-gray-900"
               >
@@ -111,11 +154,24 @@ const RegisterForm = () => {
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   placeholder="••••••••"
-                  className="h-11 w-full rounded-xl border border-orange-200 bg-white pl-10 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:ring-3 focus:ring-orange-100"
+                  className="h-11 w-full rounded-xl border border-orange-200 bg-white pl-10 pr-11 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:ring-3 focus:ring-orange-100"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-gray-400 transition-colors hover:text-orange-500"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </div>
 
@@ -131,11 +187,24 @@ const RegisterForm = () => {
                 <input
                   id="confirmPassword"
                   name="confirmPassword"
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   required
                   placeholder="••••••••"
-                  className="h-11 w-full rounded-xl border border-orange-200 bg-white pl-10 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:ring-3 focus:ring-orange-100"
+                  className="h-11 w-full rounded-xl border border-orange-200 bg-white pl-10 pr-11 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:ring-3 focus:ring-orange-100"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((visible) => !visible)}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showConfirmPassword}
+                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-gray-400 transition-colors hover:text-orange-500"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </div>
 
@@ -163,17 +232,22 @@ const RegisterForm = () => {
                 </Link>
               </span>
             </label>
-
+{error && (
+  <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">
+    {error}
+  </p>
+)}
             <button
-              type="submit"
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "h-11 w-full bg-orange-500 text-white hover:bg-orange-600"
-              )}
-            >
-              Create Account
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </button>
+  type="submit"
+  disabled={loading}
+  className={cn(
+    buttonVariants({ size: "lg" }),
+    "h-11 w-full bg-orange-500 text-white hover:bg-orange-600"
+  )}
+>
+  {loading ? "Creating account..." : "Create Account"}
+  {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
+</button>
           </form>
 
           {/* Toggle */}
