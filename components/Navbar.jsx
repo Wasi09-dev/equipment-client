@@ -50,7 +50,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
-console.log(user);
+
   const handleSignOut = async () => {
     setMenuOpen(false);
     await authClient.signOut();
@@ -60,11 +60,15 @@ console.log(user);
 
   const linkClass = (href) =>
     `text-sm font-medium transition-colors hover:text-orange-500 ${
-      pathname === href ? "text-orange-500" : "text-foreground/70"
+      pathname === href ? "text-orange-500" : "text-stone-600"
     }`;
 
+  const dashboardClass = `text-sm font-medium transition-colors hover:text-orange-500 ${
+    pathname.startsWith("/dashboard") ? "text-orange-500" : "text-stone-600"
+  }`;
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur">
+    <header className="sticky top-0 z-50 w-full border-b border-orange-200/70 bg-gradient-to-r from-white/90 via-orange-50/80 to-white/90 shadow-sm shadow-orange-900/5 backdrop-blur-md">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
@@ -83,6 +87,11 @@ console.log(user);
               {link.label}
             </Link>
           ))}
+          {user && (
+            <Link href="/dashboard" className={dashboardClass}>
+              Dashboard
+            </Link>
+          )}
         </div>
 
         {/* Desktop auth area */}
@@ -147,6 +156,13 @@ console.log(user);
                   </Link>
                 </SheetClose>
               ))}
+              {user && (
+                <SheetClose asChild>
+                  <Link href="/dashboard" className={dashboardClass}>
+                    Dashboard
+                  </Link>
+                </SheetClose>
+              )}
 
               {isPending ? null : user ? (
                 <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-3">

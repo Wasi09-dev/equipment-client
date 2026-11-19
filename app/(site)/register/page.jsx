@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Eye, EyeOff, Image, Lock, Mail, User, Wrench } from "lucide-react";
+import { ArrowRight, ChevronDown, Eye, EyeOff, Image, Lock, Mail, User, Wrench } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -25,6 +25,7 @@ const handleSubmit = async (event) => {
   const email = formData.get("email");
   const password = formData.get("password");
   const confirmPassword = formData.get("confirmPassword");
+  const role = formData.get("role") || "customer";
 
   if (password !== confirmPassword) {
     setError("Passwords do not match");
@@ -36,8 +37,8 @@ const handleSubmit = async (event) => {
     name,
     email,
     password,
+    role,
     image: image || undefined,
-    callbackURL: "/",
   });
   setLoading(false);
 
@@ -51,8 +52,7 @@ toast.add({
   variant: "success",
 
 });
-  router.push("/");
-  router.refresh();
+  router.push("/dashboard");
 };
 
   return (
@@ -97,6 +97,27 @@ toast.add({
                   placeholder="John Doe"
                   className="h-11 w-full rounded-xl border border-orange-200 bg-white pl-10 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:ring-3 focus:ring-orange-100"
                 />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="role"
+                className="mb-1.5 block text-sm font-medium text-gray-900"
+              >
+                I want to join as
+              </label>
+              <div className="relative">
+                <select
+                  id="role"
+                  name="role"
+                  defaultValue="customer"
+                  className="h-11 w-full appearance-none rounded-xl border border-orange-200 bg-white px-4 pr-10 text-sm text-gray-900 outline-none transition focus:border-orange-400 focus:ring-3 focus:ring-orange-100"
+                >
+                  <option value="customer">Customer — rent equipment</option>
+                  <option value="owner">Owner — list my equipment</option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-orange-500" />
               </div>
             </div>
 

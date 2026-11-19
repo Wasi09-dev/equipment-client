@@ -27,7 +27,6 @@ const SignInPage = () => {
       email,
       password,
       rememberMe: formData.get("remember") === "on",
-      callbackURL: "/",
     });
     setLoading(false);
 
@@ -36,8 +35,7 @@ const SignInPage = () => {
       return;
     }
 
-    router.push("/");
-    router.refresh();
+    router.push("/dashboard");
   };
 
   return (
