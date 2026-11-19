@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
+import { createGear } from "@/lib/action";
 
 const fieldClass =
   "h-11 w-full rounded-xl border border-orange-200 bg-white px-4 text-base text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:ring-3 focus:ring-orange-100 sm:text-sm";
@@ -64,12 +65,18 @@ export default function AddEquipmentForm() {
     setPhotos((previous) => previous.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+  const formData = new FormData(event.target);
+  const data = Object.fromEntries(formData.entries());
+const result = await createGear(data)
+console.log(result) 
+router.push('/dashboard/owner/equipment/');
+router.refresh();
     toast.add({
       type: "success",
-      title: "Equipment published (demo)",
-      description: "This form is UI-only — nothing was saved yet.",
+      title: "Equipment published successfully!",
+      description: "Your equipment listing is now live.",
     });
   };
 
