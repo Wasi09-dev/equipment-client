@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { LogOut, Menu, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { authClient } from "@/lib/auth-client";
+import { authClient} from "@/lib/auth-client";
 import {
   Sheet,
   SheetClose,
@@ -50,7 +50,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
-
+console.log(user);
   const handleSignOut = async () => {
     setMenuOpen(false);
     await authClient.signOut();
