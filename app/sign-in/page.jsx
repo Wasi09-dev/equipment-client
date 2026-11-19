@@ -5,14 +5,39 @@ import { ArrowRight, Eye, EyeOff, Lock, Mail, Wrench } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 
 const SignInPage = () => {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    // TODO: implement sign in here
-    // const formData = new FormData(event.currentTarget);
+    setError("");
+
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get("email");
+    const password = formData.get("password");
+
+    setLoading(true);
+    const { error: signInError } = await authClient.signIn.email({
+      email,
+      password,
+      rememberMe: formData.get("remember") === "on",
+      callbackURL: "/",
+    });
+    setLoading(false);
+
+    if (signInError) {
+      setError(signInError.message || "Something went wrong");
+      return;
+    }
+
+    router.push("/");
+    router.refresh();
   };
 
   return (
@@ -107,15 +132,22 @@ const SignInPage = () => {
               Remember me
             </label>
 
+            {error && (
+              <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">
+                {error}
+              </p>
+            )}
+
             <button
               type="submit"
+              disabled={loading}
               className={cn(
                 buttonVariants({ size: "lg" }),
                 "h-11 w-full bg-orange-500 text-white hover:bg-orange-600"
               )}
             >
-              Sign In
-              <ArrowRight className="ml-2 h-4 w-4" />
+              {loading ? "Signing in..." : "Sign In"}
+              {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
             </button>
           </form>
 
