@@ -4,9 +4,11 @@ import {
   ExternalLink,
   MapPin,
   Package,
+  Pencil,
   Plus,
 } from "lucide-react";
 import { getGear } from "@/lib/api/gear";
+import DeleteEquipmentButton from "@/components/dashboard/DeleEquipmentButton";
 
 export const metadata = {
   title: "My Equipment | RentGear",
@@ -107,14 +109,26 @@ function EquipmentCard({ gear }) {
             </p>
           </div>
         </div>
+<div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
+  <Link
+    href={`/dashboard/owner/equipment/${gear._id}`}
+    className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-semibold text-stone-600 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600"
+  >
+    View
+    <ExternalLink className="h-3.5 w-3.5" />
+  </Link>
 
-        <Link
-          href={`/dashboard/owner/equipment/${gear._id}`}
-          className="inline-flex shrink-0 items-center justify-center gap-1.5 self-end rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-semibold text-stone-600 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600 sm:self-center"
-        >
-          View
-          <ExternalLink className="h-3.5 w-3.5" />
-        </Link>
+  <Link
+    href={`/dashboard/owner/equipment/${gear._id}/edit`}
+    aria-label={`Edit ${gear.equipmentName}`}
+    title="Edit equipment"
+    className="grid size-9 shrink-0 place-items-center rounded-lg border border-orange-200 bg-white text-stone-600 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600"
+  >
+    <Pencil className="h-4 w-4" />
+  </Link>
+
+  <DeleteEquipmentButton id={gear._id} name={gear.equipmentName} />
+</div>
       </div>
     </article>
   );
