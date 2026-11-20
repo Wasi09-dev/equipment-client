@@ -71,7 +71,7 @@ export default function AddEquipmentForm() {
   const data = Object.fromEntries(formData.entries());
 const result = await createGear(data)
 console.log(result) 
-router.push('/dashboard/owner/equipment/');
+router.push('/dashboard/owner/equipment/MyEquipment');
 router.refresh();
     toast.add({
       type: "success",
