@@ -21,14 +21,7 @@ const selectClass = `${fieldClass} appearance-none pr-10`;
 
 const labelClass = "mb-1.5 block text-sm font-semibold text-gray-900";
 
-const categories = [
-  "Construction Equipment",
-  "Earthmoving",
-  "Lifting & Hoisting",
-  "Power Tools",
-  "Agricultural",
-  "Other",
-];
+const CATEGORIES = ["Agriculture", "Cleaning", "Construction", "Electronics", "Event", "Photography", "Vehicles"];
 
 const rentalTypes = ["Daily", "Weekly", "Monthly"];
 
@@ -127,7 +120,7 @@ router.refresh();
                 id="category"
                 name="category"
                 required
-                defaultValue={categories[0]}
+                defaultValue={CATEGORIES[0]}
                 className={selectClass}
               >
                 {categories.map((category) => (

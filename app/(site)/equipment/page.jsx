@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { FolderOpen, MapPin, Package, RotateCcw, Search, SlidersHorizontal } from "lucide-react";
 import { getGear } from "@/lib/api/gear";
 
 export const metadata = {
@@ -5,11 +7,106 @@ export const metadata = {
   description: "Browse all equipment available for rent.",
 };
 
-export default async function AllEquipmentPage({searchParams}) : Promise<JSX.Element> {
+const CATEGORIES = [
+  "Agriculture Equipment",
+  "Cleaning Equipment",
+  "Construction Equipment",
+  "Electronics",
+  "Event Equipment",
+  "Photography Equipment",
+  "Vehicles & Transportation",
+];
+
+const RENTAL_TYPES = ["Daily", "Weekly", "Monthly"];
+
+const toArray = (v) => (v ? (Array.isArray(v) ? v : [v]) : []);
+
+function firstImage(gear) {
+  return (
+    String(gear.imageUrls || "")
+      .split(/[\n,]+/)
+      .map((url) => url.trim())
+      .find(Boolean) || null
+  );
+}
+
+function GearCard({ gear }) {
+  const image = firstImage(gear);
+  const inStock = Number(gear.quantity) > 0;
+
+  return (
+    <article className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm transition hover:shadow-md">
+      <div className="relative h-44 w-full bg-stone-100">
+        {image ? (
+          <img
+            src={image}
+            alt={gear.equipmentName}
+            loading="lazy"
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-stone-300">
+            <Package className="h-10 w-10" />
+          </div>
+        )}
+        <span
+          className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-semibold text-white ${
+            inStock ? "bg-emerald-500" : "bg-red-500"
+          }`}
+        >
+          {inStock ? "Available" : "Out of stock"}
+        </span>
+      </div>
+
+      <div className="space-y-3 p-5">
+        <h2 className="text-lg font-bold text-[#3b2314]">
+          {gear.equipmentName}
+        </h2>
+
+        {gear.category && (
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1 text-xs font-medium text-stone-600">
+            <FolderOpen className="h-3.5 w-3.5 text-amber-400" />
+            {gear.category}
+          </span>
+        )}
+
+        <p className="flex items-center gap-1.5 text-sm text-stone-500">
+          <MapPin className="h-4 w-4 text-orange-500" />
+          {gear.location || "Location not set"}
+        </p>
+<div className="space-y-3 border-t border-stone-100 pt-4">
+  <p className="text-xl font-bold text-orange-600 whitespace-nowrap">
+    ${gear.rentalPrice}
+    <span className="ml-1 text-sm font-medium text-stone-500">
+      / {String(gear.rentalType || "daily").toLowerCase()}
+    </span>
+  </p>
+
+  <Link
+    href={`/equipment/${gear._id}`}
+    className="group flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-4 text-sm font-semibold text-white shadow-md shadow-orange-500/30 transition hover:from-orange-600 hover:to-orange-700 hover:shadow-lg active:scale-[0.98]"
+  >
+    View Details
+    <span className="transition-transform group-hover:translate-x-1">→</span>
+  </Link>
+</div>
+      </div>
+    </article>
+  );
+}
+
+export default async function AllEquipmentPage({ searchParams }) {
+  const params = await searchParams;
+
+ 
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (Array.isArray(value)) value.forEach((v) => qs.append(key, v));
+    else if (value) qs.append(key, value);
+  });
+  const query = qs.toString() ? `?${qs.toString()}` : "";
+
   let gear = [];
-const search = await searchParams;
-const url = new URLSearchParams(search);
-const query = url.toString();
   try {
     const data = await getGear(query);
     gear = Array.isArray(data) ? data : [];
@@ -17,18 +114,180 @@ const query = url.toString();
     gear = [];
   }
 
-  return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10">
-      <h1 className="text-2xl font-bold">All Equipment ({gear.length})</h1>
+  const selectedCategories = toArray(params.category);
+  const selectedTypes = toArray(params.rentalType).map((t) => t.toLowerCase());
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {gear.map((item) => (
-          <div key={item._id} className="rounded-xl border p-4">
-            <h2 className="font-semibold">{item.equipmentName}</h2>
-            <p className="text-sm text-stone-500">{item.category}</p>
-            <p className="mt-2 font-bold">${item.rentalPrice}</p>
+  return (
+    <div className="bg-[#faf6f1]">
+      <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-10 lg:grid-cols-[280px_1fr]">
+        {/* Filter sidebar */}
+        <form
+        
+          method="GET"
+          className="h-fit space-y-6 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm"
+        >
+          <h2 className="flex items-center gap-2 font-bold text-[#3b2314]">
+            <SlidersHorizontal className="h-4 w-4 text-orange-600" />
+            Filters
+          </h2>
+
+          <section>
+            <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-[#3b2314]">
+              Category
+            </h3>
+            <div className="space-y-2">
+              {CATEGORIES.map((c) => (
+                <label key={c} className="flex items-center gap-2 text-sm text-stone-600">
+                  <input
+                    type="checkbox"
+                    name="category"
+                    value={c}
+                    defaultChecked={selectedCategories.includes(c)}
+                  />
+                  {c}
+                </label>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-[#3b2314]">
+              Location
+            </h3>
+            <input
+              type="text"
+              name="location"
+              defaultValue={params.location || ""}
+              placeholder="e.g. Dhaka, Sylhet..."
+              className="h-10 w-full rounded-lg border border-stone-200 px-3 text-sm"
+            />
+          </section>
+
+          <section>
+            <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-[#3b2314]">
+              Rental Type
+            </h3>
+            <div className="space-y-2">
+              {RENTAL_TYPES.map((t) => (
+                <label key={t} className="flex items-center gap-2 text-sm text-stone-600">
+                  <input
+                    type="checkbox"
+                    name="rentalType"
+                    value={t}
+                    defaultChecked={selectedTypes.includes(t.toLowerCase())}
+                  />
+                  {t}
+                </label>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-[#3b2314]">
+              Price Range
+            </h3>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                name="minPrice"
+                min="0"
+                defaultValue={params.minPrice || ""}
+                placeholder="৳ Min"
+                className="h-10 w-full rounded-lg border border-stone-200 px-3 text-sm"
+              />
+              <span>-</span>
+              <input
+                type="number"
+                name="maxPrice"
+                min="0"
+                defaultValue={params.maxPrice || ""}
+                placeholder="৳ Max"
+                className="h-10 w-full rounded-lg border border-stone-200 px-3 text-sm"
+              />
+            </div>
+          </section>
+
+          <section>
+            <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-[#3b2314]">
+              Availability
+            </h3>
+            <label className="flex items-center gap-2 text-sm text-stone-600">
+              <input
+                type="checkbox"
+                name="available"
+                value="true"
+                defaultChecked={params.available === "true"}
+              />
+              Available Only
+            </label>
+          </section>
+
+          <div className="space-y-2">
+          <button
+  type="submit"
+  className="h-10 w-full rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 text-sm font-semibold text-white shadow-md shadow-orange-500/30 hover:from-orange-600 hover:to-orange-700"
+>
+  Apply Filters
+</button>
+            <Link
+              href="/equipment"
+              className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-stone-200 text-sm font-medium text-stone-600 hover:bg-stone-50"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Clear All Filters
+            </Link>
           </div>
-        ))}
+        </form>
+
+        {/* Equipment grid */}
+        <section>
+          <form method="GET" className="mb-6">
+
+  {selectedCategories.map((c) => (
+    <input key={c} type="hidden" name="category" value={c} />
+  ))}
+  {selectedTypes.map((t) => (
+    <input key={t} type="hidden" name="rentalType" value={t} />
+  ))}
+  {params.location && <input type="hidden" name="location" value={params.location} />}
+  {params.minPrice && <input type="hidden" name="minPrice" value={params.minPrice} />}
+  {params.maxPrice && <input type="hidden" name="maxPrice" value={params.maxPrice} />}
+  {params.available && <input type="hidden" name="available" value={params.available} />}
+
+  <div className="flex items-center gap-2 rounded-2xl border border-orange-100 bg-white p-2 shadow-sm shadow-orange-500/5">
+    <Search className="ml-3 h-5 w-5 shrink-0 text-stone-400" />
+    <input
+      type="text"
+      name="search"
+      defaultValue={params.search || ""}
+      placeholder="Search by equipment name, category or brand..."
+      className="h-10 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-stone-400"
+    />
+    <button
+      type="submit"
+      className="h-10 shrink-0 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-5 text-sm font-semibold text-white shadow-md shadow-orange-500/30 transition hover:from-orange-600 hover:to-orange-700"
+    >
+      Search
+    </button>
+  </div>
+</form>
+          <h1 className="mb-5 text-2xl font-bold text-[#3b2314]">
+            All Equipment{" "}
+            <span className="text-orange-600">({gear.length})</span>
+          </h1>
+
+          {gear.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-stone-300 bg-white p-12 text-center text-stone-500">
+            no equipment found matching your filters. Try adjusting the filters or clearing them to see all available equipment.
+            </div>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {gear.map((item) => (
+                <GearCard key={item._id} gear={item} />
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );
