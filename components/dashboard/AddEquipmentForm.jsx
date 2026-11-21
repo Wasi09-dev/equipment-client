@@ -123,7 +123,7 @@ router.refresh();
                 defaultValue={CATEGORIES[0]}
                 className={selectClass}
               >
-                {categories.map((category) => (
+                {CATEGORIES.map((category) => (
                   <option key={category} value={category}>
                     {category}
                   </option>

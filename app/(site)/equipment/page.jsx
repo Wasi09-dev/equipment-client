@@ -1,21 +1,14 @@
 import Link from "next/link";
 import { FolderOpen, MapPin, Package, RotateCcw, Search, SlidersHorizontal } from "lucide-react";
-import { getGear } from "@/lib/api/gear";
+import { getCategories, getGear } from "@/lib/api/gear";
+import AutoSubmitForm from "@/components/AutoSubmitForm";
 
 export const metadata = {
   title: "All Equipment | RentGear",
   description: "Browse all equipment available for rent.",
 };
 
-const CATEGORIES = [
-  "Agriculture Equipment",
-  "Cleaning Equipment",
-  "Construction Equipment",
-  "Electronics",
-  "Event Equipment",
-  "Photography Equipment",
-  "Vehicles & Transportation",
-];
+
 
 const RENTAL_TYPES = ["Daily", "Weekly", "Monthly"];
 
@@ -113,7 +106,7 @@ export default async function AllEquipmentPage({ searchParams }) {
   } catch {
     gear = [];
   }
-
+const CATEGORIES = await getCategories();
   const selectedCategories = toArray(params.category);
   const selectedTypes = toArray(params.rentalType).map((t) => t.toLowerCase());
 
@@ -121,11 +114,7 @@ export default async function AllEquipmentPage({ searchParams }) {
     <div className="bg-[#faf6f1]">
       <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-10 lg:grid-cols-[280px_1fr]">
         {/* Filter sidebar */}
-        <form
-        
-          method="GET"
-          className="h-fit space-y-6 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm"
-        >
+      <AutoSubmitForm className="h-fit space-y-6 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
           <h2 className="flex items-center gap-2 font-bold text-[#3b2314]">
             <SlidersHorizontal className="h-4 w-4 text-orange-600" />
             Filters
@@ -137,7 +126,7 @@ export default async function AllEquipmentPage({ searchParams }) {
             </h3>
             <div className="space-y-2">
               {CATEGORIES.map((c) => (
-                <label key={c} className="flex items-center gap-2 text-sm text-stone-600">
+                <label key={c} className="flex items-center gap-2 text-sm accent-orange-500">
                   <input
                     type="checkbox"
                     name="category"
@@ -169,7 +158,7 @@ export default async function AllEquipmentPage({ searchParams }) {
             </h3>
             <div className="space-y-2">
               {RENTAL_TYPES.map((t) => (
-                <label key={t} className="flex items-center gap-2 text-sm text-stone-600">
+                <label key={t} className="flex items-center gap-2 text-sm accent-orange-500">
                   <input
                     type="checkbox"
                     name="rentalType"
@@ -222,22 +211,19 @@ export default async function AllEquipmentPage({ searchParams }) {
             </label>
           </section>
 
-          <div className="space-y-2">
-          <button
-  type="submit"
-  className="h-10 w-full rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 text-sm font-semibold text-white shadow-md shadow-orange-500/30 hover:from-orange-600 hover:to-orange-700"
->
-  Apply Filters
-</button>
-            <Link
-              href="/equipment"
-              className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-stone-200 text-sm font-medium text-stone-600 hover:bg-stone-50"
-            >
-              <RotateCcw className="h-4 w-4" />
-              Clear All Filters
-            </Link>
-          </div>
-        </form>
+ <div className="space-y-2">
+  {params.search && (
+    <input type="hidden" name="search" value={params.search} />
+  )}
+  <Link
+    href="/equipment"
+    className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-stone-200 text-sm font-medium text-stone-600 transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600"
+  >
+    <RotateCcw className="h-4 w-4" />
+    Clear All Filters
+  </Link>
+</div>
+      </AutoSubmitForm>
 
         {/* Equipment grid */}
         <section>
