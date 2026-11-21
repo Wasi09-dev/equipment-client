@@ -111,7 +111,7 @@ function EquipmentCard({ gear }) {
         </div>
 <div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
   <Link
-    href={`/dashboard/owner/equipment/${gear._id}`}
+   href={`/equipment/${gear._id}`}
     className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-semibold text-stone-600 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600"
   >
     View
