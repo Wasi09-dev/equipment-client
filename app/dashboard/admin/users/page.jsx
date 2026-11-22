@@ -5,7 +5,8 @@ import ErrorCard from "@/components/dashboard/ErrorCard";
 import { getUsers } from "@/lib/api/users";
 import { formatDate } from "@/lib/format";
 import { getSessionUser } from "@/lib/session";
-
+import UserRoleSelect from "@/components/dashboard/UserRoleSelect";
+import UserBanButton from "@/components/dashboard/UserBanButton";
 export const metadata = { title: "Users | RentGear" };
 
 const roleStyles = {
@@ -60,11 +61,17 @@ export default async function AdminUsersPage() {
                 <th className="px-4 py-3 font-semibold">Email</th>
                 <th className="px-4 py-3 font-semibold">Role</th>
                 <th className="px-4 py-3 font-semibold">Joined</th>
+          <th className="px-4 py-3 font-semibold">Joined</th>
+<th className="px-4 py-3 font-semibold">Status</th>
+<th className="px-4 py-3 font-semibold">Actions</th>
+  
               </tr>
             </thead>
             <tbody className="divide-y divide-orange-50">
               {users.map((item) => {
                 const role = item.role || "customer";
+const userId = String(item._id || item.id);
+const isSelf = item.email === user.email;
                 return (
                   <tr
                     key={item._id || item.id || item.email}
@@ -84,17 +91,36 @@ export default async function AdminUsersPage() {
                     </td>
                     <td className="px-4 py-3 text-stone-600">{item.email}</td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold capitalize ${
-                          roleStyles[role] ?? roleStyles.customer
-                        }`}
-                      >
-                        {role}
-                      </span>
+                    <UserRoleSelect
+  userId={userId}
+  role={role}
+  adminEmail={user.email}
+  disabled={isSelf}
+/>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-stone-500">
                       {formatDate(item.createdAt)}
                     </td>
+                    <td className="px-4 py-3">
+  <span
+    className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+      item.banned
+        ? "border-red-200 bg-red-50 text-red-600"
+        : "border-emerald-200 bg-emerald-50 text-emerald-700"
+    }`}
+  >
+    {item.banned ? "Banned" : "Active"}
+  </span>
+</td>
+<td className="px-4 py-3">
+  <UserBanButton
+    userId={userId}
+    name={item.name || item.email}
+    banned={Boolean(item.banned)}
+    adminEmail={user.email}
+    disabled={isSelf}
+  />
+</td>
                   </tr>
                 );
               })}
