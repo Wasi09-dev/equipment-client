@@ -7,12 +7,30 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { FcGoogle } from "react-icons/fc";
 
 const SignInPage = () => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setGoogleLoading(true);
+
+    const { error: googleError } = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/dashboard",
+      newUserCallbackURL: "/dashboard",
+    });
+
+    if (googleError) {
+      setError(googleError.message || "Google sign in failed");
+      setGoogleLoading(false);
+    }
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -61,8 +79,27 @@ const SignInPage = () => {
             </p>
           </div>
 
+          {/* Google */}
+          <div className="mt-8">
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={googleLoading}
+              className="flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-orange-200 bg-white text-sm font-medium text-gray-900 transition hover:bg-orange-50 disabled:opacity-60"
+            >
+              <FcGoogle className="h-5 w-5" />
+              {googleLoading ? "Redirecting..." : "Continue with Google"}
+            </button>
+
+            <div className="my-6 flex items-center gap-3">
+              <span className="h-px flex-1 bg-orange-100" />
+              <span className="text-xs uppercase text-gray-400">or</span>
+              <span className="h-px flex-1 bg-orange-100" />
+            </div>
+          </div>
+
           {/* Form */}
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label
                 htmlFor="email"
