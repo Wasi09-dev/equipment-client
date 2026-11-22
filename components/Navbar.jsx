@@ -5,10 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { LogOut, Menu, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { authClient} from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetTitle,
   SheetTrigger,
@@ -51,8 +50,10 @@ export default function Navbar() {
   const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
 
+  const closeMenu = () => setMenuOpen(false);
+
   const handleSignOut = async () => {
-    setMenuOpen(false);
+    closeMenu();
     await authClient.signOut();
     router.push("/");
     router.refresh();
@@ -127,11 +128,19 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Button variant="ghost" asChild>
-                <Link href="/register">Register</Link>
+              <Button
+                variant="ghost"
+                render={<Link href="/register" />}
+                nativeButton={false}
+              >
+                Register
               </Button>
-              <Button className="bg-orange-500 text-white hover:bg-orange-600" asChild>
-                <Link href="/sign-in">Sign In</Link>
+              <Button
+                className="bg-orange-500 text-white hover:bg-orange-600"
+                render={<Link href="/sign-in" />}
+                nativeButton={false}
+              >
+                Sign In
               </Button>
             </>
           )}
@@ -139,10 +148,10 @@ export default function Navbar() {
 
         {/* Mobile menu */}
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="md:hidden">
-              <Menu className="h-5 w-5" />
-            </Button>
+          <SheetTrigger
+            render={<Button variant="outline" size="icon" className="md:hidden" />}
+          >
+            <Menu className="h-5 w-5" />
           </SheetTrigger>
           <SheetContent side="right" className="w-72">
             <SheetTitle className="px-4 pt-4 text-lg font-bold">
@@ -150,18 +159,23 @@ export default function Navbar() {
             </SheetTitle>
             <div className="flex flex-col gap-4 px-4 pt-4">
               {links.map((link) => (
-                <SheetClose asChild key={link.href}>
-                  <Link href={link.href} className={linkClass(link.href)}>
-                    {link.label}
-                  </Link>
-                </SheetClose>
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={closeMenu}
+                  className={linkClass(link.href)}
+                >
+                  {link.label}
+                </Link>
               ))}
               {user && (
-                <SheetClose asChild>
-                  <Link href="/dashboard" className={dashboardClass}>
-                    Dashboard
-                  </Link>
-                </SheetClose>
+                <Link
+                  href="/dashboard"
+                  onClick={closeMenu}
+                  className={dashboardClass}
+                >
+                  Dashboard
+                </Link>
               )}
 
               {isPending ? null : user ? (
@@ -190,16 +204,22 @@ export default function Navbar() {
                 </div>
               ) : (
                 <>
-                  <SheetClose asChild>
-                    <Button variant="outline" asChild>
-                      <Link href="/register">Register</Link>
-                    </Button>
-                  </SheetClose>
-                  <SheetClose asChild>
-                    <Button className="bg-orange-500 text-white hover:bg-orange-600" asChild>
-                      <Link href="/sign-in">Sign In</Link>
-                    </Button>
-                  </SheetClose>
+                  <Button
+                    variant="outline"
+                    render={<Link href="/register" />}
+                    nativeButton={false}
+                    onClick={closeMenu}
+                  >
+                    Register
+                  </Button>
+                  <Button
+                    className="bg-orange-500 text-white hover:bg-orange-600"
+                    render={<Link href="/sign-in" />}
+                    nativeButton={false}
+                    onClick={closeMenu}
+                  >
+                    Sign In
+                  </Button>
                 </>
               )}
             </div>
