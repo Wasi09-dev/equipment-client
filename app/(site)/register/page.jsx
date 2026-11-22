@@ -8,53 +8,72 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "@/components/ui/toast";
+import { FcGoogle } from "react-icons/fc";
+
 const RegisterForm = () => {
   const router = useRouter();
-const [loading, setLoading] = useState(false);
-const [error, setError] = useState("");
-const [showPassword, setShowPassword] = useState(false);
-const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-const handleSubmit = async (event) => {
-  event.preventDefault();
-  setError("");
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setGoogleLoading(true);
 
-  const formData = new FormData(event.currentTarget);
-  const name = formData.get("name");
-  const image = formData.get("imageUrl");
-  const email = formData.get("email");
-  const password = formData.get("password");
-  const confirmPassword = formData.get("confirmPassword");
-  const role = formData.get("role") || "customer";
+    const { error } = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/dashboard",
+      newUserCallbackURL: "/dashboard",
+    });
 
-  if (password !== confirmPassword) {
-    setError("Passwords do not match");
-    return;
-  }
+    if (error) {
+      setError(error.message || "Google sign in failed");
+      setGoogleLoading(false);
+    }
+  };
 
-  setLoading(true);
-  const { error } = await authClient.signUp.email({
-    name,
-    email,
-    password,
-    role,
-    image: image || undefined,
-  });
-  setLoading(false);
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError("");
 
-  if (error) {
-    setError(error.message || "Something went wrong");
-    return
-  }
-toast.add({
-  title: "Account created",
-  description: "Your account has been created successfully. Please check your email to verify your account.",
-  variant: "success",
+    const formData = new FormData(event.currentTarget);
+    const name = formData.get("name");
+    const image = formData.get("imageUrl");
+    const email = formData.get("email");
+    const password = formData.get("password");
+    const confirmPassword = formData.get("confirmPassword");
+    const role = formData.get("role") || "customer";
 
-});
-  router.push("/dashboard");
-  router.refresh();
-};
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await authClient.signUp.email({
+      name,
+      email,
+      password,
+      role,
+      image: image || undefined,
+    });
+    setLoading(false);
+
+    if (error) {
+      setError(error.message || "Something went wrong");
+      return;
+    }
+
+    toast.add({
+      title: "Account created",
+      description: "Your account has been created successfully. Please check your email to verify your account.",
+      variant: "success",
+    });
+    router.push("/dashboard");
+    router.refresh();
+  };
 
   return (
     <section className="flex flex-1 items-center justify-center bg-gradient-to-br from-orange-50 via-white to-orange-100 px-4 py-16">
@@ -79,10 +98,29 @@ toast.add({
             </p>
           </div>
 
+          {/* Google */}
+          <div className="mt-8">
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={googleLoading}
+              className="flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-orange-200 bg-white text-sm font-medium text-gray-900 transition hover:bg-orange-50 disabled:opacity-60"
+            >
+              <FcGoogle className="h-5 w-5" />
+              {googleLoading ? "Redirecting..." : "Continue with Google"}
+            </button>
+
+            <div className="my-6 flex items-center gap-3">
+              <span className="h-px flex-1 bg-orange-100" />
+              <span className="text-xs uppercase text-gray-400">or</span>
+              <span className="h-px flex-1 bg-orange-100" />
+            </div>
+          </div>
+
           {/* Form */}
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label 
+              <label
                 htmlFor="name"
                 className="mb-1.5 block text-sm font-medium text-gray-900"
               >
@@ -254,22 +292,24 @@ toast.add({
                 </Link>
               </span>
             </label>
-{error && (
-  <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">
-    {error}
-  </p>
-)}
+
+            {error && (
+              <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">
+                {error}
+              </p>
+            )}
+
             <button
-  type="submit"
-  disabled={loading}
-  className={cn(
-    buttonVariants({ size: "lg" }),
-    "h-11 w-full bg-orange-500 text-white hover:bg-orange-600"
-  )}
->
-  {loading ? "Creating account..." : "Create Account"}
-  {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
-</button>
+              type="submit"
+              disabled={loading}
+              className={cn(
+                buttonVariants({ size: "lg" }),
+                "h-11 w-full bg-orange-500 text-white hover:bg-orange-600"
+              )}
+            >
+              {loading ? "Creating account..." : "Create Account"}
+              {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
+            </button>
           </form>
 
           {/* Toggle */}
