@@ -1,13 +1,15 @@
+import { ArrowLeft, Mail, MapPin, Package, User } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Mail, MapPin, Package, User } from "lucide-react";
-import { getGearById } from "@/lib/api/gear";
 import BookingCard from "@/components/BookingCard";
+import { getGearById } from "@/lib/api/gear";
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
   const gear = await getGearById(id).catch(() => null);
-  return { title: gear ? `${gear.equipmentName} | RentGear` : "Equipment | RentGear" };
+  return {
+    title: gear ? `${gear.equipmentName} | RentGear` : "Equipment | RentGear",
+  };
 }
 
 function getImages(gear) {
@@ -23,7 +25,9 @@ function Spec({ label, value, highlight }) {
       <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
         {label}
       </p>
-      <p className={`mt-1 text-sm font-bold ${highlight ? "text-orange-600" : "text-[#3b2314]"}`}>
+      <p
+        className={`mt-1 text-sm font-bold ${highlight ? "text-orange-600" : "text-[#3b2314]"}`}
+      >
         {value || "—"}
       </p>
     </div>
@@ -44,6 +48,8 @@ export default async function EquipmentDetails({ params }) {
   const images = getImages(gear);
   const stock = Number(gear.quantity) || 0;
   const type = String(gear.rentalType || "Daily");
+  const ownerName = String(gear.ownerName || "").trim();
+  const ownerEmail = String(gear.ownerEmail || "").trim();
 
   return (
     <div className="bg-[#faf6f1]">
@@ -57,9 +63,7 @@ export default async function EquipmentDetails({ params }) {
         </Link>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-          
           <div className="space-y-6 rounded-3xl border border-orange-100 bg-white p-5 shadow-sm sm:p-7">
-          
             <div className="h-64 w-full overflow-hidden rounded-2xl bg-orange-50 sm:h-96">
               {images[0] ? (
                 <img
@@ -87,7 +91,6 @@ export default async function EquipmentDetails({ params }) {
               </div>
             )}
 
-           
             <div>
               <div className="flex flex-wrap gap-2">
                 {gear.category && (
@@ -148,7 +151,9 @@ export default async function EquipmentDetails({ params }) {
             <hr className="border-orange-100" />
 
             <section>
-              <h2 className="mb-3 font-bold text-[#3b2314]">Owner & Supplier</h2>
+              <h2 className="mb-3 font-bold text-[#3b2314]">
+                Owner & Supplier
+              </h2>
               <div className="flex items-center justify-between gap-3 rounded-2xl border border-orange-100 bg-orange-50/40 p-4">
                 <div className="flex items-center gap-3">
                   <span className="grid size-11 place-items-center rounded-full bg-orange-100 text-orange-500">
@@ -156,33 +161,40 @@ export default async function EquipmentDetails({ params }) {
                   </span>
                   <div>
                     <p className="text-sm font-bold text-[#3b2314]">
-                      {gear.ownerName || "Equipment Owner"}
+                      {ownerName || "Unknown owner"}
                     </p>
-                    {gear.ownerEmail && (
+                    {ownerEmail ? (
                       <p className="flex items-center gap-1 text-xs text-stone-500">
                         <Mail className="h-3 w-3" />
-                        {gear.ownerEmail}
+                        {ownerEmail}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-stone-400">
+                        Owner contact not available
                       </p>
                     )}
                   </div>
                 </div>
-                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                  Verified Owner
-                </span>
+                {ownerEmail && (
+                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                    Verified Owner
+                  </span>
+                )}
               </div>
             </section>
 
             <hr className="border-orange-100" />
 
             <section>
-              <h2 className="mb-3 font-bold text-[#3b2314]">Rental Terms & Conditions</h2>
+              <h2 className="mb-3 font-bold text-[#3b2314]">
+                Rental Terms & Conditions
+              </h2>
               <p className="rounded-2xl border border-orange-100 bg-orange-50/40 p-4 text-sm text-stone-600">
                 {gear.rentalTerms || "No special terms provided."}
               </p>
             </section>
           </div>
 
-        
           <aside>
             <BookingCard
               id={String(gear._id)}

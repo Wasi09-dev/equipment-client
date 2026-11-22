@@ -1,18 +1,22 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   ChevronDown,
   ImagePlus,
+  Loader2,
   MapPin,
   PackagePlus,
+  Pencil,
   Upload,
   X,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 import { toast } from "@/components/ui/toast";
-import { cn } from "@/lib/utils";
 import { createGear } from "@/lib/action";
+import { updateGear } from "@/lib/api/gear";
+import { useSession } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 
 const fieldClass =
   "h-11 w-full rounded-xl border border-orange-200 bg-white px-4 text-base text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:ring-3 focus:ring-orange-100 sm:text-sm";
@@ -21,7 +25,15 @@ const selectClass = `${fieldClass} appearance-none pr-10`;
 
 const labelClass = "mb-1.5 block text-sm font-semibold text-gray-900";
 
-const CATEGORIES = ["Agriculture", "Cleaning", "Construction", "Electronics", "Event", "Photography", "Vehicles"];
+const CATEGORIES = [
+  "Agriculture",
+  "Cleaning",
+  "Construction",
+  "Electronics",
+  "Event",
+  "Photography",
+  "Vehicles",
+];
 
 const rentalTypes = ["Daily", "Weekly", "Monthly"];
 
@@ -42,16 +54,25 @@ function SelectChevron() {
   );
 }
 
-export default function AddEquipmentForm() {
+export default function AddEquipmentForm({ gear = null }) {
   const router = useRouter();
+  const { data: session } = useSession();
+  const isEdit = Boolean(gear);
   const fileInputRef = useRef(null);
+  const nextPhotoId = useRef(0);
   const [photos, setPhotos] = useState([]);
   const [dragging, setDragging] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const addFiles = (fileList) => {
     const names = Array.from(fileList ?? []).map((file) => file.name);
     if (names.length === 0) return;
-    setPhotos((previous) => [...previous, ...names].slice(0, 6));
+    setPhotos((previous) =>
+      [
+        ...previous,
+        ...names.map((name) => ({ id: ++nextPhotoId.current, name })),
+      ].slice(0, 6),
+    );
   };
 
   const removePhoto = (index) => {
@@ -60,17 +81,52 @@ export default function AddEquipmentForm() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-  const formData = new FormData(event.target);
-  const data = Object.fromEntries(formData.entries());
-const result = await createGear(data)
-console.log(result) 
-router.push('/dashboard/owner/equipment/');
-router.refresh();
-    toast.add({
-      type: "success",
-      title: "Equipment published successfully!",
-      description: "Your equipment listing is now live.",
-    });
+
+    if (!session?.user) {
+      toast.add({
+        type: "error",
+        title: "Please sign in",
+        description: "You need to be signed in to manage equipment.",
+      });
+      return;
+    }
+
+    const formData = new FormData(event.target);
+    const data = Object.fromEntries(formData.entries());
+
+    // The API route re-reads these from the session, so they cannot be spoofed.
+    data.ownerEmail = session.user.email;
+    data.ownerName = session.user.name || "";
+
+    setSaving(true);
+    try {
+      if (isEdit) {
+        await updateGear(gear._id, data);
+      } else {
+        await createGear(data);
+      }
+
+      toast.add({
+        type: "success",
+        title: isEdit
+          ? "Equipment updated successfully!"
+          : "Equipment published successfully!",
+        description: isEdit
+          ? "Your changes are now live."
+          : "Your equipment listing is now live.",
+      });
+
+      router.push("/dashboard/owner/equipment");
+      router.refresh();
+    } catch (error) {
+      toast.add({
+        type: "error",
+        title: isEdit ? "Update failed" : "Publish failed",
+        description: error.message || "Something went wrong. Please try again.",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -85,11 +141,12 @@ router.refresh();
         </span>
         <div>
           <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
-            List New Machinery or Gear
+            {isEdit ? "Edit Machinery or Gear" : "List New Machinery or Gear"}
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Provide accurate specs, images, and rental rates to get verified and
-            rented faster.
+            {isEdit
+              ? "Update the specs, pricing, stock and availability of your listing."
+              : "Provide accurate specs, images, and rental rates to get verified and rented faster."}
           </p>
         </div>
       </div>
@@ -106,6 +163,7 @@ router.refresh();
               name="equipmentName"
               type="text"
               required
+              defaultValue={gear?.equipmentName || ""}
               placeholder="e.g. Caterpillar Excavator 320D"
               className={fieldClass}
             />
@@ -120,7 +178,7 @@ router.refresh();
                 id="category"
                 name="category"
                 required
-                defaultValue={CATEGORIES[0]}
+                defaultValue={gear?.category || CATEGORIES[0]}
                 className={selectClass}
               >
                 {CATEGORIES.map((category) => (
@@ -144,6 +202,7 @@ router.refresh();
             name="description"
             required
             rows={4}
+            defaultValue={gear?.description || ""}
             placeholder="Detailed equipment specifications, power, dimensions, operational advice..."
             className="w-full resize-y rounded-xl border border-orange-200 bg-white px-4 py-3 text-base text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:ring-3 focus:ring-orange-100 sm:text-sm"
           />
@@ -162,6 +221,7 @@ router.refresh();
               min="0"
               step="0.01"
               required
+              defaultValue={gear?.rentalPrice || ""}
               placeholder="100"
               className={fieldClass}
             />
@@ -176,7 +236,7 @@ router.refresh();
                 id="rentalType"
                 name="rentalType"
                 required
-                defaultValue={rentalTypes[0]}
+                defaultValue={gear?.rentalType || rentalTypes[0]}
                 className={selectClass}
               >
                 {rentalTypes.map((type) => (
@@ -199,6 +259,7 @@ router.refresh();
               type="number"
               min="1"
               required
+              defaultValue={gear?.quantity || ""}
               placeholder="1"
               className={fieldClass}
             />
@@ -213,6 +274,7 @@ router.refresh();
               id="brand"
               name="brand"
               type="text"
+              defaultValue={gear?.brand || ""}
               placeholder="e.g. Caterpillar, Canon"
               className={fieldClass}
             />
@@ -224,6 +286,7 @@ router.refresh();
               id="model"
               name="model"
               type="text"
+              defaultValue={gear?.model || ""}
               placeholder="e.g. CAT 320D"
               className={fieldClass}
             />
@@ -235,7 +298,7 @@ router.refresh();
               <select
                 id="condition"
                 name="condition"
-                defaultValue={conditions[0]}
+                defaultValue={gear?.condition || conditions[0]}
                 className={selectClass}
               >
                 {conditions.map((condition) => (
@@ -261,6 +324,7 @@ router.refresh();
               name="location"
               type="text"
               required
+              defaultValue={gear?.location || ""}
               placeholder="Dhaka, Bangladesh"
               className={`${fieldClass} pl-10`}
             />
@@ -279,6 +343,7 @@ router.refresh();
             </span>
           </div>
 
+          {/* biome-ignore lint/a11y/useSemanticElements: drop zone needs drag events on a container */}
           <div
             role="button"
             tabIndex={0}
@@ -311,7 +376,7 @@ router.refresh();
               "mt-4 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-8 text-center transition-colors",
               dragging
                 ? "border-orange-400 bg-orange-100/60"
-                : "border-orange-200 bg-white/70 hover:border-orange-300 hover:bg-orange-50"
+                : "border-orange-200 bg-white/70 hover:border-orange-300 hover:bg-orange-50",
             )}
           >
             <span className="flex h-11 w-11 items-center justify-center rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/30">
@@ -339,16 +404,16 @@ router.refresh();
 
           {photos.length > 0 && (
             <ul className="mt-3 flex flex-wrap gap-2">
-              {photos.map((name, index) => (
+              {photos.map((photo, index) => (
                 <li
-                  key={`${name}-${index}`}
+                  key={photo.id}
                   className="flex items-center gap-2 rounded-full border border-orange-200 bg-white px-3 py-1 text-xs text-gray-600"
                 >
-                  <span className="max-w-[14rem] truncate">{name}</span>
+                  <span className="max-w-[14rem] truncate">{photo.name}</span>
                   <button
                     type="button"
                     onClick={() => removePhoto(index)}
-                    aria-label={`Remove ${name}`}
+                    aria-label={`Remove ${photo.name}`}
                     className="text-gray-400 transition-colors hover:text-orange-500"
                   >
                     <X className="h-3.5 w-3.5" />
@@ -369,6 +434,7 @@ router.refresh();
               id="imageUrls"
               name="imageUrls"
               rows={3}
+              defaultValue={gear?.imageUrls || ""}
               placeholder="https://..."
               className="w-full resize-y rounded-xl border border-orange-200 bg-white px-4 py-3 text-base text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:ring-3 focus:ring-orange-100 sm:text-sm"
             />
@@ -377,11 +443,14 @@ router.refresh();
 
         {/* Terms */}
         <div>
-          <FieldLabel htmlFor="rentalTerms">Rental Terms &amp; Conditions</FieldLabel>
+          <FieldLabel htmlFor="rentalTerms">
+            Rental Terms &amp; Conditions
+          </FieldLabel>
           <textarea
             id="rentalTerms"
             name="rentalTerms"
             rows={4}
+            defaultValue={gear?.rentalTerms || ""}
             placeholder="Operator requirements, fuel policies, deposit instructions..."
             className="w-full resize-y rounded-xl border border-orange-200 bg-white px-4 py-3 text-base text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:ring-3 focus:ring-orange-100 sm:text-sm"
           />
@@ -399,10 +468,24 @@ router.refresh();
         </button>
         <button
           type="submit"
-          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-6 text-sm font-semibold text-white shadow-lg shadow-orange-500/30 transition-all hover:from-orange-600 hover:to-orange-700 active:translate-y-px sm:w-auto"
+          disabled={saving}
+          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-6 text-sm font-semibold text-white shadow-lg shadow-orange-500/30 transition-all hover:from-orange-600 hover:to-orange-700 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
-          <PackagePlus className="h-4 w-4" />
-          Publish Equipment
+          {saving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              {isEdit ? (
+                <Pencil className="h-4 w-4" />
+              ) : (
+                <PackagePlus className="h-4 w-4" />
+              )}
+              {isEdit ? "Save Changes" : "Publish Equipment"}
+            </>
+          )}
         </button>
       </div>
     </form>

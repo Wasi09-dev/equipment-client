@@ -53,6 +53,7 @@ toast.add({
 
 });
   router.push("/dashboard");
+  router.refresh();
 };
 
   return (

@@ -1,14 +1,11 @@
+import { ExternalLink, MapPin, Package, Pencil, Plus } from "lucide-react";
 import Link from "next/link";
-import {
-  CalendarCheck,
-  ExternalLink,
-  MapPin,
-  Package,
-  Pencil,
-  Plus,
-} from "lucide-react";
-import { getGear } from "@/lib/api/gear";
+import { redirect } from "next/navigation";
 import DeleteEquipmentButton from "@/components/dashboard/DeleEquipmentButton";
+import EmptyState from "@/components/dashboard/EmptyState";
+import ErrorCard from "@/components/dashboard/ErrorCard";
+import { getGear } from "@/lib/api/gear";
+import { getSessionUser } from "@/lib/session";
 
 export const metadata = {
   title: "My Equipment | RentGear",
@@ -109,37 +106,40 @@ function EquipmentCard({ gear }) {
             </p>
           </div>
         </div>
-<div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
-  <Link
-   href={`/equipment/${gear._id}`}
-    className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-semibold text-stone-600 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600"
-  >
-    View
-    <ExternalLink className="h-3.5 w-3.5" />
-  </Link>
+        <div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
+          <Link
+            href={`/equipment/${gear._id}`}
+            className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-semibold text-stone-600 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600"
+          >
+            View
+            <ExternalLink className="h-3.5 w-3.5" />
+          </Link>
 
-  <Link
-    href={`/dashboard/owner/equipment/${gear._id}/edit`}
-    aria-label={`Edit ${gear.equipmentName}`}
-    title="Edit equipment"
-    className="grid size-9 shrink-0 place-items-center rounded-lg border border-orange-200 bg-white text-stone-600 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600"
-  >
-    <Pencil className="h-4 w-4" />
-  </Link>
+          <Link
+            href={`/dashboard/owner/equipment/${gear._id}/edit`}
+            aria-label={`Edit ${gear.equipmentName}`}
+            title="Edit equipment"
+            className="grid size-9 shrink-0 place-items-center rounded-lg border border-orange-200 bg-white text-stone-600 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600"
+          >
+            <Pencil className="h-4 w-4" />
+          </Link>
 
-  <DeleteEquipmentButton id={gear._id} name={gear.equipmentName} />
-</div>
+          <DeleteEquipmentButton id={gear._id} name={gear.equipmentName} />
+        </div>
       </div>
     </article>
   );
 }
 
 export default async function MyEquipmentPage() {
+  const user = await getSessionUser();
+  if (!user?.email) redirect("/sign-in");
+
   let gear = [];
   let failed = false;
 
   try {
-    const data = await getGear();
+    const data = await getGear(`?ownerEmail=${encodeURIComponent(user.email)}`);
     gear = Array.isArray(data) ? data : [];
   } catch {
     failed = true;
@@ -170,37 +170,17 @@ export default async function MyEquipmentPage() {
       </section>
 
       {failed && (
-        <div className="rounded-2xl border border-red-100 bg-red-50/70 p-5 text-sm">
-          <p className="font-semibold text-red-600">
-            Couldn&apos;t load your equipment.
-          </p>
-          <p className="mt-1 text-red-500">
-            Make sure the API server is running on{" "}
-            {process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"} and
-            refresh the page.
-          </p>
-        </div>
+        <ErrorCard message="Couldn't load your equipment. Make sure the API server is running and refresh the page." />
       )}
 
       {!failed && gear.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-orange-200 bg-white/70 px-6 py-16 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-100 text-orange-500">
-            <CalendarCheck className="h-7 w-7" />
-          </span>
-          <h2 className="mt-4 text-lg font-bold text-stone-900">
-            No equipment listed yet
-          </h2>
-          <p className="mt-1 max-w-sm text-sm text-stone-500">
-            Add your first machine or tool and start earning from rentals.
-          </p>
-          <Link
-            href="/dashboard/owner/equipment/add"
-            className="mt-5 inline-flex h-10 items-center gap-2 rounded-xl bg-orange-500 px-4 text-sm font-semibold text-white shadow-lg shadow-orange-500/30 transition-colors hover:bg-orange-600"
-          >
-            <Plus className="h-4 w-4" />
-            Add Equipment
-          </Link>
-        </div>
+        <EmptyState
+          icon={Package}
+          title="No equipment added yet"
+          description="Add your first machine or tool and start earning from rentals."
+          actionLabel="Add your first equipment"
+          actionHref="/dashboard/owner/equipment/add"
+        />
       )}
 
       {gear.length > 0 && (

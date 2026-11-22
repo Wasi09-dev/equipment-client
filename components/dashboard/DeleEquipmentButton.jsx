@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "@/components/ui/toast";
 import { deleteGear } from "@/lib/api/gear";
 import { DeleteJobDialog } from "../DeleteDialog";
-
 
 export default function DeleteEquipmentButton({ id, name }) {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -14,9 +14,13 @@ export default function DeleteEquipmentButton({ id, name }) {
     try {
       setIsDeleting(true);
       await deleteGear(id);
-      router.refresh(); 
+      router.refresh();
     } catch (error) {
-      console.error(error);
+      toast.add({
+        type: "error",
+        title: "Could not delete equipment",
+        description: error.message || "Please try again.",
+      });
     } finally {
       setIsDeleting(false);
     }

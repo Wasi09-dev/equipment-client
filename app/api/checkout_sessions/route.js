@@ -159,8 +159,7 @@ export async function POST(request) {
     const image = firstHttpsImage(gear.imageUrls);
     const equipmentName = gear.equipmentName || "Equipment Rental";
 
-    // NOTE: The UI shows ৳ (BDT), but Stripe test mode does not support BDT.
-    // We charge the same numeric amount in USD (smallest unit = cents).
+   
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [

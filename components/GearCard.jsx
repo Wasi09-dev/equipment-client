@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { FolderOpen, MapPin, Package } from "lucide-react";
+import Link from "next/link";
 
 function firstImage(gear) {
   return (
@@ -13,6 +13,9 @@ function firstImage(gear) {
 export default function GearCard({ gear }) {
   const image = firstImage(gear);
   const inStock = Number(gear.quantity) > 0;
+  const ownerEmail = String(gear.ownerEmail || "").trim();
+  const ownerName = String(gear.ownerName || "").trim();
+  const ownerInitial = (ownerName || ownerEmail).charAt(0).toUpperCase();
 
   return (
     <article className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm transition hover:shadow-md">
@@ -55,6 +58,24 @@ export default function GearCard({ gear }) {
           {gear.location || "Location not set"}
         </p>
 
+        {ownerEmail && (
+          <div className="flex items-center gap-2 rounded-xl border border-orange-100 bg-orange-50/60 px-2.5 py-1.5">
+            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
+              {ownerInitial}
+            </span>
+            <div className="min-w-0">
+              {ownerName && (
+                <p className="truncate text-xs font-semibold text-[#3b2314]">
+                  {ownerName}
+                </p>
+              )}
+              <p className="truncate text-[11px] text-stone-500">
+                {ownerEmail}
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-3 border-t border-stone-100 pt-4">
           <p className="text-xl font-bold text-orange-600 whitespace-nowrap">
             ${gear.rentalPrice}
@@ -68,7 +89,9 @@ export default function GearCard({ gear }) {
             className="group flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-4 text-sm font-semibold text-white shadow-md shadow-orange-500/30 transition hover:from-orange-600 hover:to-orange-700 hover:shadow-lg active:scale-[0.98]"
           >
             View Details
-            <span className="transition-transform group-hover:translate-x-1">→</span>
+            <span className="transition-transform group-hover:translate-x-1">
+              →
+            </span>
           </Link>
         </div>
       </div>
